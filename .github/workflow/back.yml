@@ -1,0 +1,108 @@
+# A reliable name for the workflow file, e.g., build-and-publish.yml
+name: Build system image
+
+# Trigger conditions remain the same
+on:
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+  push:
+    paths:
+      - 'src/**'
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-push: # Job name is more descriptive
+    # Using ubuntu-latest is a best practice for longevity and up-to-date tools
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # fetch-depth: 0 is necessary for accurate tagging based on git history
+          fetch-depth: 0
+
+      - name: Set up QEMU for multi-platform builds
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: network=host
+
+      - name: Cache Docker layers for faster builds
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          # A more robust cache key
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to GitHub Container Registry (ghcr.io)
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.TOKEN }}
+
+      # - name: Login to Alibaba Cloud Container Registry
+      #   uses: docker/login-action@v2
+      #   with:
+      #     registry: registry.cn-hangzhou.aliyuncs.com
+      #     username: ${{ secrets.ALI_HUB_USERNAME }}
+      #     password: ${{ secrets.ALI_HUB_PASSWORD }}
+
+      - name: Generate Docker image tags
+        id: docker_meta # Give this step an ID to reference its outputs if needed later
+        run: |
+          # Use a more robust way to check for the main branch or tags
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            # We are building a tag like v1.2.3
+            VERSION=${{ github.ref_name }}
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            # We are building the main branch
+            VERSION="latest"
+          else
+            # We are building a feature branch
+            VERSION=${{ github.ref_name }}
+          fi
+
+          # Sanitize branch name to be a valid Docker tag (e.g., feature/something -> feature-something)
+          VERSION=$(echo $VERSION | sed 's/\//-/g')
+
+          echo "Generated version tag: $VERSION"
+
+          # Set environment variables for the next steps
+          # This logic is now cleaner and easier to debug
+          echo "Git_Tag=ghcr.io/${{ github.repository_owner }}/ailog:$VERSION" >> $GITHUB_ENV
+          # echo "Ali_Tag=${{ secrets.ALI_IMAGE_NAME }}/ailog:$VERSION" >> $GITHUB_ENV
+
+          # The 'latest' tag is only added for pushes to the main branch
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "Git_Latest=ghcr.io/${{ github.repository_owner }}/ailog:latest" >> $GITHUB_ENV
+            # echo "Ali_Latest=${{ secrets.ALI_IMAGE_NAME }}/ailog:latest" >> $GITHUB_ENV
+          fi
+
+      - name: Build and push Docker image
+        run: |
+          # Construct the tags dynamically here for better readability
+          TAGS=""
+          TAGS="$TAGS -t ${{ env.Git_Tag }}"
+          # TAGS="$TAGS -t ${{ env.Ali_Tag }}"
+
+          # Only add the :latest tags if they were set
+          if [[ -n "${{ env.Git_Latest }}" ]]; then
+            TAGS="$TAGS -t ${{ env.Git_Latest }}"
+            # TAGS="$TAGS -t ${{ env.Ali_Latest }}"
+          fi
+
+          echo "Building and pushing with tags: $TAGS"
+
+          docker buildx build . \
+            -f ./Dockerfile \
+            --platform linux/amd64,linux/arm64 \
+            --label "org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/ailog" \
+            --push \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            --cache-to=type=local,dest=/tmp/.buildx-cache \
+            $TAGS
