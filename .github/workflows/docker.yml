@@ -36,15 +36,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 第五步：构建并推送 Docker 镜像
+      # 第五步：构建并推送 Docker 镜像到 GitHub Container Registry
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          registry: ghcr.io
           context: .                                  # 构建上下文：当前目录
           file: ./Dockerfile                         # Dockerfile 路径
           platforms: linux/amd64,linux/arm64        # 目标平台：支持 x86_64 和 ARM64
           push: true                                 # 构建完成后推送到仓库
-          tags: user/testexpress:latest                       # 镜像标签 user/app:latest
+          tags: |                                    # 镜像标签（推送到 ghcr.io）
+            ghcr.io/${{ github.repository_owner }}/testexpress:latest           # 最新版本标签
+            ghcr.io/${{ github.repository_owner }}/testexpress:${{ github.sha }} # 基于 commit SHA 的标签
           cache-from: type=gha                       # 从 GitHub Actions 缓存读取
           cache-to: type=gha,mode=max               # 写入 GitHub Actions 缓存（最大模式）
