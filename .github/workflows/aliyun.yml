@@ -1,5 +1,5 @@
 # Docker 镜像构建和推送工作流
-name: ghcr image build
+name: aliyun image build
 
 # 触发条件
 on:
