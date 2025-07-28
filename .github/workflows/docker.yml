@@ -45,7 +45,6 @@ jobs:
           platforms: linux/amd64,linux/arm64        # 目标平台：支持 x86_64 和 ARM64
           push: true                                 # 构建完成后推送到仓库
           tags: |                                    # 镜像标签
-            ${{ vars.DOCKERHUB_USERNAME }}/testexpress:latest           # 最新版本标签
-            ${{ vars.DOCKERHUB_USERNAME }}/testexpress:${{ github.sha }} # 基于 commit SHA 的标签
+            ${{ github.repository_owner }}/testexpress:latest           # 最新版本标签
           cache-from: type=gha                       # 从 GitHub Actions 缓存读取
           cache-to: type=gha,mode=max               # 写入 GitHub Actions 缓存（最大模式）
