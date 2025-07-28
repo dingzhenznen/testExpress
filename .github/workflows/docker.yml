@@ -40,6 +40,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
+          registry: ghcr.io
           context: .                                  # 构建上下文：当前目录
           file: ./Dockerfile                         # Dockerfile 路径
           platforms: linux/amd64,linux/arm64        # 目标平台：支持 x86_64 和 ARM64
