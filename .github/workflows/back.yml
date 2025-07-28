@@ -101,7 +101,7 @@ jobs:
           docker buildx build . \
             -f ./Dockerfile \
             --platform linux/amd64,linux/arm64 \
-            --label "org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/ailog" \
+            --label "org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/testexpress" \
             --push \
             --cache-from=type=local,src=/tmp/.buildx-cache \
             --cache-to=type=local,dest=/tmp/.buildx-cache \
