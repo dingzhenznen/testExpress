@@ -74,13 +74,13 @@ jobs:
 
           # Set environment variables for the next steps
           # This logic is now cleaner and easier to debug
-          echo "Git_Tag=ghcr.io/${{ github.repository_owner }}/ailog:$VERSION" >> $GITHUB_ENV
-          # echo "Ali_Tag=${{ secrets.ALI_IMAGE_NAME }}/ailog:$VERSION" >> $GITHUB_ENV
+          echo "Git_Tag=ghcr.io/${{ github.repository_owner }}/testexpress:$VERSION" >> $GITHUB_ENV
+          # echo "Ali_Tag=${{ secrets.ALI_IMAGE_NAME }}/testexpress:$VERSION" >> $GITHUB_ENV
 
           # The 'latest' tag is only added for pushes to the main branch
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "Git_Latest=ghcr.io/${{ github.repository_owner }}/ailog:latest" >> $GITHUB_ENV
-            # echo "Ali_Latest=${{ secrets.ALI_IMAGE_NAME }}/ailog:latest" >> $GITHUB_ENV
+            echo "Git_Latest=ghcr.io/${{ github.repository_owner }}/testexpress:latest" >> $GITHUB_ENV
+            # echo "Ali_Latest=${{ secrets.ALI_IMAGE_NAME }}/testexpress:latest" >> $GITHUB_ENV
           fi
 
       - name: Build and push Docker image
