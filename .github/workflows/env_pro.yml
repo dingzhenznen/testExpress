@@ -1,0 +1,20 @@
+# A reliable name for the workflow file, e.g., build-and-publish.yml
+name: Build pro env
+
+# Trigger conditions remain the same
+on:
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+  push:
+    paths:
+      - 'src/**'
+    tags:
+      - 'v*'
+
+# 在工作流程中使用示例
+jobs:
+  build-and-push: # Job name is more descriptive
+    # Using ubuntu-latest is a best practice for longevity and up-to-date tools
+    runs-on: ubuntu-latest 
+    environment: production  # 声明关联环境
+    steps:
+      - run: echo "Accessing secret: ${{ secrets.DB_PASSWORD }}"
